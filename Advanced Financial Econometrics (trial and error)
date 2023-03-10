@@ -56,7 +56,7 @@ sigma <- result$sigma
 ###################################################################################################################
 
 ################################################### Not - Working #######################################################
-f_SVHeston <- function(T, n, theta, kappa, xi, rho) {
+f_SVHeston_for_Pavel <- function(T, n, theta, kappa, xi, rho) {
   # Setting horizon and discretization
   N <- T * n + 1
   dt <- 1 / n
@@ -92,7 +92,7 @@ xi <- 0.3 # volatility of volatility
 rho <- -0.5 # correlation between the stock price and volatility
 
 # Simulate the Heston model
-sim <- f_SVHeston(T = T, n = n, theta = theta, kappa = kappa, xi = xi, rho = rho)
+sim <- f_SVHeston_for_Pavel(T = T, n = n, theta = theta, kappa = kappa, xi = xi, rho = rho)
 
 # Plot the simulated volatility and stock price
 par(mfrow = c(2,1))
