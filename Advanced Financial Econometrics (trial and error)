@@ -84,6 +84,9 @@ f_SVHeston_for_pavel <- function(T, n, theta, kappa, xi, rho) {
   return(list(X = X, sigma = sigma))
 }
 
+
+# Plot done later
+
 # Set parameter values
 T <- 1 # time horizon
 n <- 252 # number of time steps per year
@@ -100,7 +103,27 @@ par(mfrow = c(2,1))
 plot(sim$sigma, type = "l", xlab = "Time", ylab = "Volatility", main = "Simulated Volatility")
 plot(sim$X, type = "l", xlab = "Time", ylab = "Price", main = "Simulated Stock Price")
 
+set.seed(123)
+result <- f_SVHeston(T, n, sigma0, kappa, xi, rho)
+X <- result$X
+sigma <- result$sigma
 
+# Compute returns divided into T different days
+r <- diff(X)
+r <- matrix(r, ncol = T)
+
+# Compute realized volatility on different days
+RV <- colSums(r^2)
+
+# Compute integrated volatility on different days
+s <- matrix(sigma[-length(sigma)], ncol = T)
+IV <- colMeans(s^2)
+
+# Plotting sigma_t^2, RV and IV
+a <- 100 * 250
+time <- seq(0, T, dt)
+plot(time, a * sigma^2, type = "l", col = "blue",
+     xlab = "time", ylab = "volatility", ylim = c(0, 6))
 
 ################################################### Not - Working #######################################################
 f_SVHeston_for_Pavel <- function(T, n, theta, kappa, xi, rho) {
