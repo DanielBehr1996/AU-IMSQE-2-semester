@@ -99,7 +99,7 @@ rho <- -0.5 # correlation between the stock price and volatility
 sim <- f_SVHeston_for_pavel(T = T, n = n, theta = theta, kappa = kappa, xi = xi, rho = rho)
 
 # Plot the simulated volatility and stock price
-par(mfrow = c(2,1))
+par(mfrow = c(2,1), mar = c(3, 3, 2, 1))
 plot(sim$sigma, type = "l", xlab = "Time", ylab = "Volatility", main = "Simulated Volatility")
 plot(sim$X, type = "l", xlab = "Time", ylab = "Price", main = "Simulated Stock Price")
 
