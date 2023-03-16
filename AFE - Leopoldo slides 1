@@ -12,6 +12,149 @@ Hidden Markov Models
 #                                                                                                                 #
 ###################################################################################################################
 
+Slide 4
+library(ggplot2)
+
+# Set up data for plot a
+a <- seq(-6, 6, length.out = 100)
+a_df <- data.frame(y = a, density = dnorm(a, mean = 0, sd = 1))
+a_title <- "Distribution of Y|X=0"
+a_subtitle <- expression(paste("(", X == 0, ")"))
+
+# Set up data for plot b
+b <- seq(-6, 6, length.out = 100)
+b_df <- data.frame(y = b, density = dnorm(b, mean = 3, sd = 1))
+b_title <- "Distribution of Y|X=1"
+b_subtitle <- expression(paste("(", X == 1, ")"))
+
+# Plot a
+ggplot(a_df, aes(x = y, y = density)) +
+  geom_line(color = "blue", size = 1.5) +
+  labs(title = a_title, subtitle = a_subtitle, x = "Y", y = "p(Y | X)") +
+  theme_bw()
+
+# Plot b
+ggplot(b_df, aes(x = y, y = density)) +
+  geom_line(color = "green", size = 1.5) +
+  labs(title = b_title, subtitle = b_subtitle, x = "Y", y = "p(Y | X)") +
+  theme_bw()
+# Set up data for plot a
+a <- seq(-6, 6, length.out = 100)
+a_df <- data.frame(y = a, density = dnorm(a, mean = 0, sd = 1))
+a_title <- "Distribution of Y|X=0"
+a_subtitle <- expression(paste("(", X == 0, ")"))
+
+# Set up data for plot b
+b <- seq(-6, 6, length.out = 100)
+b_df <- data.frame(y = b, density = dnorm(b, mean = 3, sd = 1))
+b_title <- "Distribution of Y|X=1"
+b_subtitle <- expression(paste("(", X == 1, ")"))
+
+# Plot a and b side by side
+ggarrange(
+  ggplot(a_df, aes(x = y, y = density)) +
+    geom_line(color = "blue", size = 1.5) +
+    labs(title = a_title, subtitle = a_subtitle, x = "Y", y = "p(Y | X)") +
+    theme_bw(),
+  
+  ggplot(b_df, aes(x = y, y = density)) +
+    geom_line(color = "green", size = 1.5) +
+    labs(title = b_title, subtitle = b_subtitle, x = "Y", y = "p(Y | X)") +
+    theme_bw(),
+  
+  ncol = 2
+)
+
+
+Slide 5
+library(ggplot2)
+
+# Set up data for plot a
+a <- seq(-6, 6, length.out = 100)
+a_df <- data.frame(y = a, density = dnorm(a, mean = 0, sd = 1), group = "Distribution of Y|X=0")
+
+# Set up data for plot b
+b <- seq(-6, 6, length.out = 100)
+b_df <- data.frame(y = b, density = dnorm(b, mean = 3, sd = 1), group = "Distribution of Y|X=1")
+
+# Combine data frames
+combined_df <- rbind(a_df, b_df)
+
+# Set up data for mixture distribution
+weights <- c(0.5, 0.5)
+means <- c(0, 3)
+sds <- c(1, 1)
+
+mixture_df <- data.frame(y = seq(-6, 6, length.out = 100))
+mixture_df$density <- weights[1]*dnorm(mixture_df$y, mean = means[1], sd = sds[1]) +
+  weights[2]*dnorm(mixture_df$y, mean = means[2], sd = sds[2])
+mixture_df$group <- "Mixture Distribution"
+
+# Plot
+ggplot(combined_df, aes(x = y, y = density, color = group)) +
+  geom_line(size = 1.5) +
+  geom_line(data = mixture_df, aes(x = y, y = density, color = group), size = 1.5, linetype = "dashed") +
+  scale_color_manual(values = c("Distribution of Y|X=0" = "blue", "Distribution of Y|X=1" = "green", "Mixture Distribution" = "black")) +
+  labs(title = "Mixture of Distributions", x = "Y", y = "p(Y)") +
+  theme_bw()
+
+
+# Now I do it where there is a larger weight on plot a of the plot:
+
+library(ggplot2)
+library(ggpubr)
+
+# Set up data for plot a
+a <- seq(-6, 6, length.out = 100)
+a_df <- data.frame(y = a, density = dnorm(a, mean = 0, sd = 1))
+a_title <- "Distribution of Y|X=0"
+a_subtitle <- expression(paste("(", X == 0, ")"))
+
+# Set up data for plot b
+b <- seq(-6, 6, length.out = 100)
+b_df <- data.frame(y = b, density = dnorm(b, mean = 3, sd = 1))
+b_title <- "Distribution of Y|X=1"
+b_subtitle <- expression(paste("(", X == 1, ")"))
+
+# Set up data for mixture distribution
+mix_proportion <- 0.7 # More weight on data from plot a
+mix_df <- data.frame(y = a, density = mix_proportion * dnorm(a, mean = 0, sd = 1) +
+                       (1 - mix_proportion) * dnorm(a, mean = 3, sd = 1))
+mix_title <- "Mixture Distribution of Y|X=0 and Y|X=1"
+mix_subtitle <- expression(paste("(", "Mixture of ", X == 0, " and ", X == 1, ")"))
+
+# Plot the three distributions
+a_plot <- ggplot(a_df, aes(x = y, y = density)) +
+  geom_line(color = "blue", size = 1.5) +
+  labs(title = a_title, subtitle = a_subtitle, x = "Y", y = "p(Y | X)") +
+  theme_bw()
+
+b_plot <- ggplot(b_df, aes(x = y, y = density)) +
+  geom_line(color = "green", size = 1.5) +
+  labs(title = b_title, subtitle = b_subtitle, x = "Y", y = "p(Y | X)") +
+  theme_bw()
+
+mix_plot <- ggplot(mix_df, aes(x = y, y = density)) +
+  geom_line(color = "purple", size = 1.5) +
+  labs(title = mix_title, subtitle = mix_subtitle, x = "Y", y = "p(Y)") +
+  theme_bw()
+
+# Arrange the plots using ggarrange
+ggarrange(a_plot, b_plot, mix_plot, ncol = 3, widths = c(1, 1, 1.5))
+
+
+Slide 12
+set.seed(123)
+n <- 1000
+data <- rgamma(n, shape = 1.5, scale = 0.5) - 1
+data <- ifelse(data < -5, -5, data) 
+data <- ifelse(data > 5, 5, data) 
+
+library(ggplot2)
+ggplot(data.frame(x = data), aes(x)) + 
+  geom_histogram(aes(y = ..density..), binwidth = 0.5, color = "black", fill = "white") +
+  geom_density(alpha = 0.5, fill = "blue") +
+  labs(title = "Histogram of Right-Skewed Data", x = "Data", y = "Density")
 
 
 
