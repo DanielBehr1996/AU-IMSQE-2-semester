@@ -1,6 +1,10 @@
 Advanced Financial Econometrics (trial and error document)
 
-# Daniel coding
+# Notes:
+There is two parts for each person. Working is the code that the person got to work, 
+and the Not-working part is something that the persons need help for. 
+
+#####################                       Daniel coding                                       ##################### 
 ## Working
 f_SVHeston <- function(T, n, theta, kappa, xi, rho) {
   
