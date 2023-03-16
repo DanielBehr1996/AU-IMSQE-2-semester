@@ -13,6 +13,23 @@ Jumps and Realized Measures
 #                                                                                                                 #
 ###################################################################################################################
 
+# Integrated volatility
+IV <- function(sigma) {
+  iv <- sum(sigma^2)/length(sigma)
+  return(iv)
+}
+
+# Jump variation
+JV <- function(N, c) {
+  jv <- sum(c^2)
+  return(jv)
+}
+
+# Quadratic variation
+QV <- function(sigma, N, c) {
+  qv <- sum(sigma^2) + sum(c^2)
+  return(qv)
+}
 
 
 
