@@ -181,6 +181,7 @@ plot(sim$X, type = "l", xlab = "Time", ylab = "Price", main = "Simulated Stock P
 
 # Fowsi coding
 ## Working
+kkkk
 
 ## Not-working
 
