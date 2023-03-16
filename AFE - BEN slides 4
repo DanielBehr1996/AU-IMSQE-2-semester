@@ -13,8 +13,39 @@ Volatility Forecasting with Realized Measures
 #                                                                                                                 #
 ###################################################################################################################
 
+# HAR model
+har_model <- function(RV, lags = c(5, 22)) {
+  # calculate lagged RVs
+  RV_lags <- lapply(lags, function(lag) {
+    lagged_RV <- rollapply(RV, lag, function(x) sum(x^2), align = "right")
+    c(rep(NA, lag - 1), lagged_RV)
+  })
+  names(RV_lags) <- paste0("RV_lag", lags)
+  # combine lagged RVs and RV into a data.frame
+  df <- data.frame(RV = RV, RV_lags)
+  # calculate HAR coefficients by OLS regression
+  model <- lm(RV ~ RV_lag5 + RV_lag22, data = df)
+  # return coefficients
+  return(model$coefficients)
+}
 
+# Package solution for HAR model
+# install.packages("HARModel")
+library(HARModel)
+#Vanilla HAR from Corsi(2009)
+#load data
+data("SP500RM")
+SP500rv = SP500RM$RV
+#Estimate the HAR model:
+FitHAR = HAREstimate(RM = SP500rv, periods = c(1,5,22))
 
+#extract the estimated coefficients:
+coef(FitHAR)
+#plot the fitted values
+plot(FitHAR)
+
+#calculate the Q-like loss-function:
+mean(qlike(FitHAR))
 
 
 ###################################################################################################################
