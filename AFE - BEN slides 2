@@ -13,8 +13,53 @@ Microstructure Noise and Realized Measures
 #                                                                                                                 #
 ###################################################################################################################
 
+# Kernel functions
+
+# Bartlett kernel
+k_bartlett <- function(x) {
+  ifelse(x <= 1, 1 - x, 0)
+}
+
+# Cubic kernel
+k_cubic <- function(x) {
+  ifelse(x <= 1, 1 - 3 * x^2 + 2 * x^3, 0)
+}
+
+# Parzen kernel
+k_parzen <- function(x) {
+  ifelse(x <= 1/2, 1 - 6 * x^2 + 6 * x^3, 2 * (1 - x)^3)
+}
 
 
+
+######################################## Not working ##############################################################
+realized_kernel <- function(Y, k, H) {
+  n <- length(Y)
+  gamma0 <- mean(Y)
+  gamma <- function(h) {
+    ifelse(h == 0, 1, {
+      numerator <- sum((Y[(h+1):n] - Y[1:(n-h)]) * (Y[(h+1):n] - Y[1:(n-h)]) -
+                         (Y[(h+1):n] - Y[h:(n-1)]) * (Y[1:(n-h)] - Y[1:(n-h-1)]))
+      denominator <- n * (n - h)
+      return(numerator / denominator)
+    })
+  }
+  
+  RK <- function(h) {
+    if(h == 0) {
+      return(gamma0)
+    } else if (H > n/2) {
+      stop("The bandwidth parameter H cannot be greater than n/2.")
+    } else {
+      weights <- k(seq(0, h, length.out = 1000))
+      gamma_vals <- gamma(seq(0, h, length.out = 1000))
+      return(sum(weights * gamma_vals) / sum(weights))
+    }
+  }
+  
+  RK_estimates <- sapply(0:H, RK)
+  return(RK_estimates)
+}
 
 
 ###################################################################################################################
