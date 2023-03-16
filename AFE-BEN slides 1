@@ -14,6 +14,218 @@ Introduction to Realized Measures
 ###################################################################################################################
 
 
+Slide 10:
+# Set the seed
+set.seed(2023)
+# Set discretization size
+m <- 10000
+delta <- 1/m
+
+# Generate m independent standard Gaussian draws
+Z <- rnorm(m)
+
+# Compute Brownian motion path
+W <- cumsum(sqrt(delta) * Z)
+
+# Simulate Brownian motion at specific times t = p/m
+simulate_BM <- function(p) {
+  sqrt(p * delta) * sum(Z[1:p])
+}
+
+# RW
+# Define function to generate random walk without drift
+RW <- function(N, x0, mu, variance) {
+  z <- cumsum(rnorm(n = N, mean = 0, sd = sqrt(variance)))
+  t <- 1:N
+  x <- x0 + t * mu + z
+  return(x)
+}
+
+# Generate two independent random walks without drift
+P1 <- RW(100, 0, 0, 0.002)
+
+
+# Example usage
+t <- seq(0, 1, length.out = m)
+W_t <- sapply(t, simulate_BM)
+W_t[0] <- 0 # It starts at 0, i.e. W_0 = 0.
+
+
+# Brownian motion vs Random Walk
+# Random Walk
+set.seed(2023)
+steps <- 100
+walk <- numeric(steps)
+walk[1] <- 0
+for (i in 2:steps) {
+  walk[i] <- walk[i-1] + sample(c(-1, 1), 1)
+}
+plot(walk, type="l", xlab="Step", ylab="Position", main = "Random Walk")
+
+# Brownian motion
+set.seed(2023)
+steps <- 10000
+sigma <- 1
+dt <- 1
+brownian_motion <- numeric(steps)
+brownian_motion[1] <- 0
+for (i in 2:steps) {
+  brownian_motion[i] <- brownian_motion[i-1] + rnorm(1, mean=0, sd=sigma*sqrt(dt))
+}
+plot(brownian_motion, type="l", xlab="Step", ylab="Position", main = "Brownian motion")
+
+# How to plot them
+# Plotting
+par(mfrow=c(1, 2))
+plot(walk, type="l", xlab="Step", ylab="Position", main = "Random Walk")
+plot(brownian_motion, type="l", xlab="Step", ylab="Position", main = "Brownian Motion")
+library(ggplot2)
+library(ggpubr)
+
+walk_df <- data.frame(Step = 1:100, Position = walk)
+bm_df <- data.frame(Step = seq(1, 10000, length.out = 100), Position = brownian_motion[seq(1, 10000, length.out = 100)])
+
+plot1 <- ggplot() + 
+  geom_line(data = walk_df, aes(x = Step, y = Position), color = "blue") + 
+  ggtitle("Random Walk") + 
+  xlab("Step") + 
+  ylab("Position") + 
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
+
+plot2 <- ggplot() + 
+  geom_line(data = bm_df, aes(x = Step, y = Position), color = "red") + 
+  ggtitle("Brownian Motion") + 
+  xlab("Step") + 
+  ylab("Position") + 
+  theme_classic() + 
+  theme(plot.title = element_text(hjust = 0.5))
+ggarrange(plot1, plot2, ncol = 2)
+
+
+# Realized volatility
+# Load necessary libraries
+library(xts)
+library(highfrequency)
+
+# Create sample data
+set.seed(123)
+n_obs <- 1000
+timestamps <- seq.POSIXt(from = as.POSIXct("2022-01-01 09:30:00"), by = "1 min", length.out = n_obs)
+prices <- cumsum(rnorm(n_obs, mean = 0.01, sd = 0.02))
+data <- data.frame(timestamps, prices)
+
+# Convert data to an xts object with datetime index
+data_xts <- xts(data$prices, order.by = data$timestamps)
+
+# Compute realized volatility using the rCov() function
+rv <- rCov(data_xts, alignBy = "minute")
+
+# Print the first 10 rows of the realized volatility values
+head(rv, n = 10)
+
+
+# Univariate realized volatility
+rv <- rCov(rData = sampleTData[, list(DT, PRICE)], alignBy = "minutes",
+           alignPeriod = 5, makeReturns = TRUE)
+rv
+
+# Multivariate realized covariance matrix
+rc <- rCov(rData = sampleOneMinuteData, makeReturns = TRUE)
+rc
+
+
+
+# Realized volatility (own function)
+RV_all <- function(X) {
+  n <- length(X)
+  i <- 2:n
+  RV <- sum((X[i]-X[i-1])^2)
+  return(RV)
+}
+
+# Bipower Variation (own function)
+BV <- function(x) {
+  n <- length(x) 
+  c <- pi/2
+  BV <- c * sum(abs(x[-1] - x[-n]) * abs(x[-n] - x[-(n-1)]))
+  return(BV)
+}
+
+# Heston model
+f_SVHeston <- function(T, n, theta, kappa, xi, rho) {
+  
+  # Setting horizon and discretization
+  N <- T * n + 1
+  dt <- 1/n
+  
+  # Initialization
+  v0 <- theta # This always starts sigma_t^2 from theta
+  
+  # simulate v_t=sigma_t^2 which is a square root diffusion process
+  dW <- rnorm(N, 0, sqrt(dt)) # increments of Brownian motion W
+  v <- rep(v0, N)
+  dB <- rho * dW + sqrt((1 - rho^2)) * rnorm(N, 0, sqrt(dt)) # increments of B
+  
+  for (j in 2:N) {
+    v[j] <- v[j - 1] + kappa * (theta - v[j - 1]) * dt + xi * sqrt(v[j - 1]) * dB[j - 1]
+  }
+  
+  v <- pmax(v, 0) # to avoid negative values caused by the discretization.
+  sigma <- sqrt(v)
+  X <- cumsum(sigma * dW)
+  
+  return(list(X = X, sigma = sigma))
+}
+
+# Example usage:
+n <- 2340
+dt <- 1/n
+T <- 10
+sigma0 <- 0.04/250
+kappa <- 5/250
+xi <- 0.50/250
+rho <- -0.50
+
+set.seed(123)
+result <- f_SVHeston(T, n, sigma0, kappa, xi, rho)
+X <- result$X
+sigma <- result$sigma
+
+# Compute returns divided into T different days
+r <- diff(X)
+r <- matrix(r, ncol = T)
+
+# Compute realized volatility on different days
+RV <- colSums(r^2)
+
+# Compute integrated volatility on different days
+s <- matrix(sigma[-length(sigma)], ncol = T)
+IV <- colMeans(s^2)
+
+
+lse(x <= 1/2, 1 - 6 * x^2 + 6 * x^3, 2 * (1 - x)^3)
+}
+
+
+
+################################################### Not working ###################################################
+# Truncated realized volatility:
+TRV <- function(X, omega) {
+  n <- length(X)
+  un <- n - omega*n
+  TRV <- sum((diff(X))^2 * (abs(diff(X))<=un))/((n-1)*un)
+  return(TRV)
+}
+
+
+power_variation <- function(path, p) {
+  n <- length(path)
+  delta <- 1/n
+  sum((sqrt(n) * diff(path))^p) / n
+}
+
+
 
 
 
