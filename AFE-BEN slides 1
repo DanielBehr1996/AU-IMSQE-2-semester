@@ -235,6 +235,25 @@ power_variation <- function(path, p) {
 #                                                                                                                 #
 ###################################################################################################################
 
+###Code for slide 10 lecture 1 - Berz: How to simulate brownian motion
+
+# Step 1: Set discretization of span [0,1]
+m <- 1000
+delta <- 1/m
+
+# Step 2: Generate m independent standard Gaussian draws
+set.seed(123) # for reproducibility
+Z <- rnorm(m)
+
+# Step 3: Simulate Brownian motion
+W <- numeric(m+1)
+for (p in 1:m) {
+  W[p+1] <- W[p] + sqrt(delta)*Z[p]
+}
+
+# Plot the simulated Brownian motion
+plot(seq(0,1,length=m+1), W, type="l", xlab="t", ylab="W(t)")
+
 
 
 
