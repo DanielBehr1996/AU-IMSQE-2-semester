@@ -236,24 +236,42 @@ power_variation <- function(path, p) {
 ###################################################################################################################
 
 ###Code for slide 10 lecture 1 - Berz: How to simulate brownian motion
+### Note the random walk is scaled with the same as the brownian motion with \sqrt(1/m)
 
-# Step 1: Set discretization of span [0,1]
-m <- 1000
-delta <- 1/m
+library(ggplot2)
 
-# Step 2: Generate m independent standard Gaussian draws
-set.seed(123) # for reproducibility
-Z <- rnorm(m)
+# Set the discretization size
+m <- 10000
+dt <- 1/m
 
-# Step 3: Simulate Brownian motion
-W <- numeric(m+1)
-for (p in 1:m) {
-  W[p+1] <- W[p] + sqrt(delta)*Z[p]
+# Generate m independent standard Gaussian draws for Brownian motion and random walk
+Z_bm <- rnorm(m)
+Z_rw <- rnorm(m)
+
+# Initialize the Brownian motion path and random walk
+W <- numeric(m)
+W[1] <- 0
+X <- numeric(m)
+X[1] <- 0
+
+# Loop through the time steps and calculate the Brownian motion path and scaled random walk without drift
+for (i in 2:m) {
+  W[i] <- W[i - 1] + sqrt(dt) * Z_bm[i]
+  X[i] <- X[i - 1] + sqrt(dt) * Z_rw[i]
 }
 
-# Plot the simulated Brownian motion
-plot(seq(0,1,length=m+1), W, type="l", xlab="t", ylab="W(t)")
+# Create a time vector
+time <- seq(0, 1 - dt, dt)
 
+# Plot the Brownian motion path and scaled random walk without drift
+df <- data.frame(time = time, W = W, X = X)
+ggplot(df) + 
+  geom_line(aes(x = time, y = W, color = "Brownian Motion")) +
+  geom_line(aes(x = time, y = X, color = "Scaled Random Walk without Drift")) +
+  ggtitle("Comparison of Brownian Motion and Scaled Random Walk without Drift") +
+  xlab("Time") +
+  ylab("Value") +
+  scale_color_manual(values = c("Brownian Motion" = "blue", "Scaled Random Walk without Drift" = "red"))
 
 
 
