@@ -213,11 +213,19 @@ lse(x <= 1/2, 1 - 6 * x^2 + 6 * x^3, 2 * (1 - x)^3)
 # Truncated realized volatility:
 TRV <- function(X, omega) {
   n <- length(X)
-  un <- n - omega*n
+  un <- n - omega*n #### (rettelse, det skal være u_n = n^(-omega) )
   TRV <- sum((diff(X))^2 * (abs(diff(X))<=un))/((n-1)*un)
   return(TRV)
 }
 
+# Ved ikke hvordan du har lavet dine log returns, men det vidst noget i den er stil for funktionen #
+trv_n <- function(omega) {
+  u_n <- n^(-omega)
+  trv_values <- (log_returns^2) * (abs(log_returns) <= u_n)
+  return(sum(trv_values))
+}
+
+#####
 
 power_variation <- function(path, p) {
   n <- length(path)
@@ -272,6 +280,111 @@ ggplot(df) +
   xlab("Time") +
   ylab("Value") +
   scale_color_manual(values = c("Brownian Motion" = "blue", "Scaled Random Walk without Drift" = "red"))
+
+############################### Estimators: Realized, Bipower, Truncated volatility ##############################
+
+# Generate random log-returns data
+set.seed(42) # Set seed for reproducibility
+n <- 1000 # Number of log-returns
+log_returns <- rnorm(n, mean = 0, sd = 0.01) # Generate random log-returns with mean 0 and sd 0.01
+
+# Define parameters for measures
+c <- pi / 2
+omega <- 0.1 # Choose your value for omega
+u_n <- n^(-omega)
+
+# Calculate values for each measure
+rv_values <- log_returns^2
+bv_values <- c * (abs(log_returns[-1]) * abs(log_returns[-length(log_returns)]))
+trv_values <- (log_returns^2) * (abs(log_returns) <= u_n)
+
+# Calculate the overall measures (RV_n, BV_n, and TRV_n)
+rv_n <- sum(rv_values)
+bv_n <- sum(bv_values)
+trv_n <- sum(trv_values)
+
+# Print results
+cat("Realized Volatility (RV_n):", rv_n, "\n")
+cat("Bipower Variation (BV_n):", bv_n, "\n")
+cat("Truncated Realized Volatility (TRV_n):", trv_n, "\n")
+
+# print first 10
+# Extract the first 10 values for each measure
+first_10_rv <- head(rv_values, 10)
+first_10_bv <- head(bv_values, 10)
+first_10_trv <- head(trv_values, 10)
+
+# Print the first 10 values for each measure
+cat("First 10 Realized Volatility values:\n")
+print(first_10_rv)
+cat("\nFirst 10 Bipower Variation values:\n")
+print(first_10_bv)
+cat("\nFirst 10 Truncated Realized Volatility values:\n")
+print(first_10_trv)
+
+# Code for varying Omega for truncated realized volatility. Notice the log-returns have higher std so we get different values for the range [0, ½]
+
+# Load required libraries
+if (!requireNamespace("ggplot2", quietly = TRUE)) {
+  install.packages("ggplot2")
+}
+library(ggplot2)
+
+# Function to calculate Truncated Realized Volatility for a given omega value
+trv_n <- function(omega, log_returns) {
+  n <- length(log_returns)
+  u_n <- n^(-omega)
+  trv_values <- (log_returns^2) * (abs(log_returns) <= u_n)
+  return(sum(trv_values))
+}
+
+# Generate random log-returns data with a higher standard deviation. This code has a varying omega
+set.seed(42) # Set seed for reproducibility
+n <- 1000 # Number of log-returns
+log_returns_high_sd <- rnorm(n, mean = 0, sd = 0.05) # Generate random log-returns with mean 0 and sd 0.05
+
+# Define a range of omega values
+omega_values <- seq(0.01, 0.49, by = 0.01)
+
+# Calculate Truncated Realized Volatility for each omega value with higher standard deviation
+trv_results_high_sd <- sapply(omega_values, function(omega) trv_n(omega, log_returns_high_sd))
+
+# Create a data frame with the results
+trv_df_high_sd <- data.frame(Omega = omega_values, TRV = trv_results_high_sd)
+
+# Generate random log-returns data from a t-distribution
+set.seed(42) # Set seed for reproducibility
+n <- 1000 # Number of log-returns
+degrees_of_freedom <- 5
+log_returns_t <- rt(n, df = degrees_of_freedom) * 0.01 # Generate random log-returns from a t-distribution with 5 degrees of freedom
+
+# Calculate Truncated Realized Volatility for each omega value with t-distribution
+trv_results_t <- sapply(omega_values, function(omega) trv_n(omega, log_returns_t))
+
+# Create a data frame with the results
+trv_df_t <- data.frame(Omega = omega_values, TRV = trv_results_t)
+
+# Print TRV results for log-returns with higher standard deviation
+cat("Truncated Realized Volatility (Higher Standard Deviation):\n")
+print(trv_df_high_sd)
+
+# Print TRV results for log-returns from a t-distribution
+cat("\nTruncated Realized Volatility (T-distribution):\n")
+print(trv_df_t)
+
+# Combine the data frames for plotting
+trv_df_both <- rbind(data.frame(Distribution = "Higher Standard Deviation", trv_df_high_sd),
+                     data.frame(Distribution = "T-distribution", trv_df_t))
+
+# Create a single plot comparing both datasets
+trv_plot_both <- ggplot(trv_df_both, aes(x = Omega, y = TRV, color = Distribution)) +
+  geom_line() +
+  labs(title = "Truncated Realized Volatility vs Omega (Comparing Distributions)",
+       x = "Omega",
+       y = "Truncated Realized Volatility")
+
+# Display the plot
+print(trv_plot_both)
 
 
 
